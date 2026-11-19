@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KeepLite — Умный блокнот и заметки</title>
+  <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Верхняя панель -->
+  <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sticky top-0 z-20 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Логотип -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 bg-amber-400 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-sm">
+          ✎
+        </div>
+        <span class="text-xl font-bold tracking-tight text-slate-800">KeepLite</span>
+      </div>
+
+      <!-- Поиск -->
+      <div class="flex-1 max-w-md mx-2">
+        <input id="searchInput" type="text" placeholder="Поиск по заметкам..."
+          class="w-full bg-slate-100 hover:bg-slate-200/70 focus:bg-white border border-transparent focus:border-amber-400 rounded-xl px-4 py-2 text-sm outline-none transition" />
+      </div>
+
+      <!-- Кнопки резервной копии -->
+      <div class="flex items-center gap-2">
+        <button id="exportBtn" title="Скачать резервную копию"
+          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg transition">
+          ⬇ Сохранить копию
+        </button>
+        <label title="Загрузить из файла"
+          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg transition cursor-pointer">
+          ⬆ Загрузить
+          <input id="importInput" type="file" accept=".json" class="hidden" />
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основной контент -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+
+    <!-- Форма создания новой заметки -->
+    <div class="max-w-xl mx-auto mb-10">
+      <div id="noteComposer" class="bg-white rounded-2xl shadow-md border border-slate-200 p-4 transition-colors duration-200">
+        <!-- Заголовок (показывается при клике) -->
+        <input id="noteTitle" type="text" placeholder="Заголовок"
+          class="w-full font-semibold text-base bg-transparent outline-none mb-2 hidden placeholder:text-slate-400" />
+
+        <!-- Обычный текст -->
+        <textarea id="noteBody" rows="1" placeholder="Заметка..."
+          class="w-full text-sm bg-transparent outline-none resize-none placeholder:text-slate-500"></textarea>
+
+        <!-- Блок чек-листа (скрыт по умолчанию) -->
+        <div id="checklistBuilder" class="hidden space-y-2 mt-2">
+          <div id="checklistItems" class="space-y-1.5"></div>
+          <div class="flex items-center gap-2 pt-1">
+            <span class="text-slate-400 text-sm">+</span>
+            <input id="newCheckItemInput" type="text" placeholder="Новый пункт списка (нажмите Enter)..."
+              class="w-full text-sm bg-transparent outline-none border-b border-slate-300/70 pb-1" />
+          </div>
+        </div>
+
+        <!-- Нижняя панель инструментов формы -->
+        <div id="composerToolbar" class="hidden flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-200/60">
+          <div class="flex items-center gap-2">
+            <!-- Выбор цвета -->
+            <div id="colorPalette" class="flex items-center gap-1.5"></div>
+
+            <!-- Переключатель Текст / Список -->
+            <button id="toggleChecklistBtn" type="button"
+              class="ml-2 text-xs px-2.5 py-1 rounded-lg bg-black/5 hover:bg-black/10 font-medium transition">
+              ☑ Чек-лист
+            </button>
+          </div>
+
+          <button id="addNoteBtn" type="button"
+            class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+            Добавить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Закрепленные заметки -->
+    <div id="pinnedSection" class="hidden mb-8">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">Закрепленные</h2>
+      <div id="pinnedGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
+    </div>
+
+    <!-- Остальные заметки -->
+    <div id="othersSection">
+      <h2 id="othersLabel" class="hidden text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">Другие заметки</h2>
+      <div id="notesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
+    </div>
+
+    <!-- Пустое состояние -->
+    <div id="emptyState" class="hidden text-center py-16 text-slate-400">
+      <div class="text-4xl mb-2">📝</div>
+      <p class="text-sm">Здесь пока пусто. Создайте свою первую заметку выше!</p>
+    </div>
+
+  </main>
+
+  <script>
+    // Доступные цвета стикеров (в стиле Google Keep)
+    const COLORS = [
+      { id: 'white', bg: 'bg-white', dot: 'bg-white border-slate-300' },
+      { id: 'amber', bg: 'bg-amber-100', dot: 'bg-amber-300 border-amber-400' },
+      { id: 'emerald', bg: 'bg-emerald-100', dot: 'bg-emerald-300 border-emerald-400' },
+      { id: 'sky', bg: 'bg-sky-100', dot: 'bg-sky-300 border-sky-400' },
+      { id: 'rose', bg: 'bg-rose-100', dot: 'bg-rose-300 border-rose-400' },
+      { id: 'purple', bg: 'bg-purple-100', dot: 'bg-purple-300 border-purple-400' },
+    ];
+
+    // Состояние приложения
+    let notes = JSON.parse(localStorage.getItem('keeplite_notes') || '[]');
+    let selectedColor = 'white';
+    let isChecklistMode = false;
+    let draftChecklist = [];
+
+    // Элементы DOM
+    const noteComposer = document.getElementById('noteComposer');
+    const noteTitle = document.getElementById('noteTitle');
+    const noteBody = document.getElementById('noteBody');
+    const composerToolbar = document.getElementById('composerToolbar');
+    const colorPalette = document.getElementById('colorPalette');
+    const toggleChecklistBtn = document.getElementById('toggleChecklistBtn');
+    const checklistBuilder = document.getElementById('checklistBuilder');
+    const checklistItems = document.getElementById('checklistItems');
+    const newCheckItemInput = document.getElementById('newCheckItemInput');
+    const addNoteBtn = document.getElementById('addNoteBtn');
+    const searchInput = document.getElementById('searchInput');
+
+    const pinnedSection = document.getElementById('pinnedSection');
+    const pinnedGrid = document.getElementById('pinnedGrid');
+    const othersLabel = document.getElementById('othersLabel');
+    const notesGrid = document.getElementById('notesGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    // Сохранение в память браузера
+    function saveNotes() {
+      localStorage.setItem('keeplite_notes', JSON.stringify(notes));
+    }
+
+    // Инициализация палитры цветов
+    function renderPalette() {
+      colorPalette.innerHTML = '';
+      COLORS.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-5 h-5 rounded-full border ${c.dot} transition transform hover:scale-110 ${
+          selectedColor === c.id ? 'ring-2 ring-slate-600 scale-110' : ''
+        }`;
+        btn.onclick = () => {
+          selectedColor = c.id;
+          noteComposer.className = `${c.bg} rounded-2xl shadow-md border border-slate-200 p-4 transition-colors duration-200`;
+          renderPalette();
+        };
+        colorPalette.appendChild(btn);
+      });
+    }
+
+    // Раскрытие формы при клике
+    noteBody.addEventListener('focus', openComposer);
+    function openComposer() {
+      noteTitle.classList.remove('hidden');
+      composerToolbar.classList.remove('hidden');
+      composerToolbar.classList.add('flex');
+      if (!isChecklistMode) noteBody.rows = 3;
+    }
+
+    // Переключение между обычным текстом и чек-листом
+    toggleChecklistBtn.onclick = () => {
+      isChecklistMode = !isChecklistMode;
+      if (isChecklistMode) {
+        noteBody.classList.add('hidden');
+        checklistBuilder.classList.remove('hidden');
+        toggleChecklistBtn.textContent = '¶ Обычный текст';
+        newCheckItemInput.focus();
+      } else {
+        noteBody.classList.remove('hidden');
+        checklistBuilder.classList.add('hidden');
+        toggleChecklistBtn.textContent = '☑ Чек-лист';
+        noteBody.focus();
+      }
+    };
+
+    // Добавление пункта в черновик чек-листа
+    newCheckItemInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && newCheckItemInput.value.trim()) {
+        e.preventDefault();
+        draftChecklist.push({ text: newCheckItemInput.value.trim(), done: false });
+        newCheckItemInput.value = '';
+        renderDraftChecklist();
+      }
+    });
+
+    function renderDraftChecklist() {
+      checklistItems.innerHTML = '';
+      draftChecklist.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between text-sm bg-black/5 px-2.5 py-1 rounded-lg';
+        row.innerHTML = `
+          <span>• ${escapeHtml(item.text)}</span>
+          <button type="button" class="text-slate-400 hover:text-rose-600 text-xs">✕</button>
+        `;
+        row.querySelector('button').onclick = () => {
+          draftChecklist.splice(idx, 1);
+          renderDraftChecklist();
+        };
+        checklistItems.appendChild(row);
+      });
+    }
+
+    // Создание новой заметки
+    addNoteBtn.onclick = () => {
+      const title = noteTitle.value.trim();
+      const body = noteBody.value.trim();
+
+      // Если в поле ввода чек-листа остался несохраненный текст, добавим и его
+      if (isChecklistMode && newCheckItemInput.value.trim()) {
+        draftChecklist.push({ text: newCheckItemInput.value.trim(), done: false });
+        newCheckItemInput.value = '';
+      }
+
+      if (!title && !body && draftChecklist.length === 0) return;
+
+      notes.unshift({
+        id: Date.now(),
+        title,
