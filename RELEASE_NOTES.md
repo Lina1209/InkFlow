@@ -21,7 +21,7 @@
 
 ## Проект и авторство
 
-**Lina1#09 · Mirror-Studio ©**
+**Lina1209 · Mirror-Studio ©**
 
 - Сайт: https://lina1209.github.io/InkFlow/
 - GitHub-репозиторий: https://github.com/Lina1209/InkFlow
