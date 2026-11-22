@@ -81,6 +81,9 @@ KeepLite развивается. Среди направлений дальне�
 
 ## 💜 Проект
 
-**KeepLite — Mirror- Studio · Lina1209 ©**
+**KeepLite — авторский проект Lina1#09 · Mirror-Studio ©**
+
+- **Сайт:** https://lina1209.github.io/InkFlow/
+- **GitHub-репозиторий:** https://github.com/Lina1209/InkFlow
 
 Если проект оказался полезен, поставьте ⭐ репозиторию на GitHub и поделитесь им с теми, кому нравится держать идеи в порядке.
