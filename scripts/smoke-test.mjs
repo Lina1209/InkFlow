@@ -23,4 +23,7 @@ assert(html.includes('name="viewport"'), 'Responsive viewport meta is required')
 assert(!/<script[^>]+src=["']https?:\/\//i.test(html), 'External scripts are not allowed in the app shell');
 readFileSync('sw.js', 'utf8');
 readFileSync('icon.svg', 'utf8');
+const poster = readFileSync('assets/keeplite-poster.svg', 'utf8');
+assert(poster.includes('<svg') && poster.includes('KeepLite'), 'Launch poster must be present');
+assert(html.includes('welcomeTitle') && html.includes('keeplite-poster.svg'), 'Landing hero must include the product poster');
 console.log('KeepLite smoke checks passed.');
